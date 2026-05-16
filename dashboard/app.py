@@ -12,6 +12,7 @@ engine = create_engine(
 
 st.title("Mobile Product Analytics Dashboard")
 
+st.sidebar.header("Dashboard Filters")
 
 users_query = "SELECT COUNT(*) AS total_users FROM users;"
 users_df = pd.read_sql(users_query, engine)
@@ -145,3 +146,90 @@ fig_subs = px.pie(
 )
 
 st.plotly_chart(fig_subs)
+
+#PART 6: REVENUE BY ACQUISITION CHANNEL
+channel_revenue_query = """
+SELECT
+    u.acquisition_channel,
+    ROUND(SUM(p.amount), 2) AS revenue
+FROM users u
+JOIN purchases p
+ON u.user_id = p.user_id
+GROUP BY u.acquisition_channel
+ORDER BY revenue DESC;
+"""
+
+channel_revenue_df = pd.read_sql(channel_revenue_query, engine)
+
+st.header("Revenue by Acquisition Channel")
+
+fig_channel_revenue = px.bar(
+    channel_revenue_df,
+    x="acquisition_channel",
+    y="revenue"
+)
+
+st.plotly_chart(fig_channel_revenue)
+
+#PART 7: CHURN RATE QUERY
+churn_query = """
+SELECT
+ROUND(
+    COUNT(*) FILTER (
+        WHERE canceled_date IS NOT NULL
+    )::numeric
+    / COUNT(*) * 100,
+2
+) AS churn_rate
+FROM subscriptions;
+"""
+
+churn_df = pd.read_sql(churn_query, engine)
+
+st.header("Subscription Churn Rate")
+
+st.metric(
+    "Churn Rate",
+    f"{churn_df.iloc[0]['churn_rate']}%"
+)
+
+#PART 8: ENGAGEMENT BY COUNTRY
+country_sessions_query = """
+SELECT
+    u.country,
+    COUNT(s.session_id) AS total_sessions
+FROM users u
+JOIN sessions s
+ON u.user_id = s.user_id
+GROUP BY u.country
+ORDER BY total_sessions DESC;
+"""
+
+country_sessions_df = pd.read_sql(country_sessions_query, engine)
+
+st.header("User Engagement by Country")
+
+fig_country_sessions = px.bar(
+    country_sessions_df,
+    x="country",
+    y="total_sessions"
+)
+
+st.plotly_chart(fig_country_sessions)
+
+#PART 9: TOP SUBSCRIBERS
+top_spenders_query = """
+SELECT
+    user_id,
+    ROUND(SUM(amount), 2) AS total_spent
+FROM purchases
+GROUP BY user_id
+ORDER BY total_spent DESC
+LIMIT 10;
+"""
+
+top_spenders_df = pd.read_sql(top_spenders_query, engine)
+
+st.header("Top Spending Users")
+
+st.dataframe(top_spenders_df)
