@@ -4,19 +4,48 @@ from faker import Faker
 
 fake = Faker()
 
-users = []
-
 channels = ["Instagram", "Google", "TikTok", "Organic", "YouTube"]
 countries = ["USA", "Canada", "UK", "Germany", "India"]
 
+#(DAY 9: ADDED USER BEHAVIOR PROFILES)
+channel_purchase_multiplier = {
+    "Organic": 0.55,
+    "Google": 0.40,
+    "Instagram": 0.30,
+    "YouTube": 0.25,
+    "TikTok": 0.15
+}
+
+country_spend_multiplier = {
+    "USA": 1.6,
+    "Canada": 1.3,
+    "UK": 1.2,
+    "Germany": 1.1,
+    "India": 0.6
+}
+
+country_session_multiplier = {
+    "USA": 1.0,
+    "Canada": 1.0,
+    "UK": 1.1,
+    "Germany": 1.1,
+    "India": 1.5
+}
+
+users = []
+
 for user_id in range(1, 10001):
+
+    country = random.choice(countries)
+    channel = random.choice(channels)
+
     users.append({
         "user_id": user_id,
         "signup_date": fake.date_between(start_date='-1y', end_date='today'),
-        "country": random.choice(countries),
-        "acquisition_channel": random.choice(channels)
+        "country": country,
+        "acquisition_channel": channel
     })
-
+    
 users_df = pd.DataFrame(users)
 
 users_df.to_csv("../data/users.csv", index=False)
@@ -29,7 +58,14 @@ session_id = 1
 
 for user_id in range(1, 10001):
 
-    num_sessions = random.randint(1, 25)
+    user_country = users[user_id - 1]["country"]
+
+    base_sessions = random.randint(1, 25)
+
+    num_sessions = int(
+        base_sessions *
+        country_session_multiplier[user_country]
+    )
 
     for _ in range(num_sessions):
 
@@ -54,18 +90,33 @@ purchase_id = 1
 
 for user_id in range(1, 10001):
 
-    # Only some users make purchases
-    if random.random() < 0.35:
+    user_channel = users[user_id - 1]["acquisition_channel"]
+
+    purchase_probability = channel_purchase_multiplier[user_channel]
+
+    if random.random() < purchase_probability:
 
         num_purchases = random.randint(1, 5)
 
         for _ in range(num_purchases):
 
+            user_country = users[user_id - 1]["country"]
+
+            base_amount = random.uniform(4.99, 99.99)
+
+            adjusted_amount = (
+                base_amount *
+                country_spend_multiplier[user_country]
+            )
+
             purchases.append({
                 "purchase_id": purchase_id,
                 "user_id": user_id,
-                "amount": round(random.uniform(4.99, 99.99), 2),
-                "purchase_date": fake.date_between(start_date='-1y', end_date='today')
+                "amount": round(adjusted_amount, 2),
+                "purchase_date": fake.date_between(
+                    start_date='-1y',
+                    end_date='today'
+                )
             })
 
             purchase_id += 1
