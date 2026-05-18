@@ -37,7 +37,11 @@ users = []
 for user_id in range(1, 10001):
 
     country = random.choice(countries)
-    channel = random.choice(channels)
+    channel = random.choices(
+        channels,
+        weights=[25, 20, 35, 10, 10],
+        k=1
+    )[0]
 
     users.append({
         "user_id": user_id,
@@ -102,7 +106,13 @@ for user_id in range(1, 10001):
 
             user_country = users[user_id - 1]["country"]
 
-            base_amount = random.uniform(4.99, 99.99)
+            #WHALE PATCH
+            is_whale = random.random() < 0.05
+
+            if is_whale:
+                base_amount = random.uniform(200, 1000)
+            else:
+                base_amount = random.uniform(4.99, 99.99)
 
             adjusted_amount = (
                 base_amount *
@@ -150,7 +160,7 @@ for user_id in range(1, 10001):
         subscriptions.append({
             "sub_id": sub_id,
             "user_id": user_id,
-            "plan_type": random.choice(plans),
+            "plan_type": random.choices(plans,weights=[70, 25, 5],k=1)[0],
             "start_date": start_date,
             "canceled_date": canceled_date
         })
