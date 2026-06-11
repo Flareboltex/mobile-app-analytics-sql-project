@@ -3,8 +3,17 @@ import pandas as pd
 from sqlalchemy import create_engine
 from urllib.parse import quote_plus
 import plotly.express as px
+import os
 
-password = quote_plus("[REDACTED]")
+raw_password = os.getenv("DB_PASSWORD")
+
+if raw_password is None:
+    raise ValueError(
+        "DB_PASSWORD environment variable not set"
+    )
+
+password = quote_plus(raw_password)
+
 # PostgreSQL connection
 engine = create_engine(
     f"postgresql+psycopg2://postgres:{password}@localhost:5432/mobile_analytics"
